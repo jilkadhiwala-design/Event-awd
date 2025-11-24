@@ -1,0 +1,27 @@
+[
+  {
+    "title": "Fresher Party",
+    "date": "2025-09-10",
+    "location": "DRB CLG",
+    "desc": "The C.B.Patel computer college organized the biggest freshers party."
+  },
+  {
+    "title": "Box Cricket Tournament 2025",
+    "date": "2025-10-05",
+    "location": "C.B.patel Ground",
+    "desc": "An Amazing box Cricket tournament."
+  },
+  {
+    "title": "Design Workshop",
+    "date": "2025-09-20",
+    "location": "Lab 2",
+    "desc": "UI/UX fundamentals."
+  },
+    {
+    "title": "D77 Workshop",
+    "date": "2025-09-20",
+    "location": "Lab 2",
+    "desc": "UI/UX fundamentals."
+  }
+  
+]
