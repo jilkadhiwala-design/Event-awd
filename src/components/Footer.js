@@ -21,6 +21,8 @@ export default function Footer() {
             <li><Link className="hover:underline" to="/about">About</Link></li>
             <li><Link className="hover:underline" to="/gallery">Gallery</Link></li>
             <li><Link className="hover:underline" to="/contact">Contact</Link></li>
+            <li><Link className="hover:underline" to="/login">Login</Link></li>
+            <li><Link className="hover:underline" to="/register">Register</Link></li>
           </ul>
         </div>
         <div>
