@@ -8,8 +8,7 @@ export default function About() {
         <h2 className="text-5xl-center font-bold mb-4">About Us</h2>
         <p className="text-gray-600">
         Welcome to Eventura – Your Smart Event Management Partner! 🎉
-
-At Eventura, we believe that every event is more than just a gathering – it’s a memory in the making. Our mission is to simplify event planning and management so you can focus on what truly matters: creating unforgettable experiences
+        At Eventura, we believe that every event is more than just a gathering – it’s a memory in the making. Our mission is to simplify event planning and management so you can focus on what truly matters: creating unforgettable experiences
         </p>
         <div className="grid sm:grid-cols-2 gap-4 mt-6">
           <div className="card">

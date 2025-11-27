@@ -42,6 +42,7 @@ export default function Navbar() {
           <NavItem to="/about">About</NavItem>
           <NavItem to="/gallery">Gallery</NavItem>
           <NavItem to="/contact">Contact</NavItem>
+          <NavItem to="/Mybookings">My Bookings</NavItem>
           &nbsp;&nbsp;&nbsp;{userName && (
             <span className="font-semibold text-primary">
               Hello, {userName}

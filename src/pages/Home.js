@@ -1,13 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Home() {
   const [events, setEvents] = useState([]);
-  const [newEvent, setNewEvent] = useState({ title: "", date: "", location: "", desc: "" });
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    date: "",
+    location: "",
+    desc: "",
+  });
 
   // edit mode
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  // auth
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    localStorage.getItem("auth") === "true"
+  );
+  const navigate = useNavigate();
+
+  // listen for login/logout change (from Login: window.dispatchEvent(new Event("authChanged")))
+  useEffect(() => {
+    const handler = () => {
+      setIsLoggedIn(localStorage.getItem("auth") === "true");
+    };
+    window.addEventListener("authChanged", handler);
+    return () => window.removeEventListener("authChanged", handler);
+  }, []);
 
   // Load events
   useEffect(() => {
@@ -16,7 +36,11 @@ export default function Home() {
       .then((data) => {
         // ensure each event has an id
         const normalized = (data || []).map((ev) => ({
-          id: ev.id || `srv-${(ev.title || "e").replace(/\s+/g, "-")}-${ev.date || Date.now()}`,
+          id:
+            ev.id ||
+            `srv-${(ev.title || "e").replace(/\s+/g, "-")}-${
+              ev.date || Date.now()
+            }`,
           ...ev,
         }));
         setEvents(normalized);
@@ -31,16 +55,16 @@ export default function Home() {
 
     if (isEditing && editingId) {
       // Save edits
-      const updated = events.map((ev) => (ev.id === editingId ? { ...ev, ...newEvent, id: editingId } : ev));
+      const updated = events.map((ev) =>
+        ev.id === editingId ? { ...ev, ...newEvent, id: editingId } : ev
+      );
       setEvents(updated);
-      // optionally persist: localStorage.setItem("events", JSON.stringify(updated));
       cancelEdit();
     } else {
       // Add new
       const eventWithId = { ...newEvent, id: `loc-${Date.now()}` };
       const updated = [...events, eventWithId];
       setEvents(updated);
-      // optionally persist: localStorage.setItem("events", JSON.stringify(updated));
       setNewEvent({ title: "", date: "", location: "", desc: "" });
     }
   };
@@ -49,10 +73,15 @@ export default function Home() {
   const startEdit = (id) => {
     const ev = events.find((x) => x.id === id);
     if (!ev) return;
-    setNewEvent({ title: ev.title || "", date: ev.date || "", location: ev.location || "", desc: ev.desc || "" });
+    setNewEvent({
+      title: ev.title || "",
+      date: ev.date || "",
+      location: ev.location || "",
+      desc: ev.desc || "",
+    });
     setIsEditing(true);
     setEditingId(id);
-    // scroll to top or focus if needed
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -68,48 +97,110 @@ export default function Home() {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
     const updated = events.filter((ev) => ev.id !== id);
     setEvents(updated);
-    // optionally persist: localStorage.setItem("events", JSON.stringify(updated));
-    // If deleting the event currently being edited, cancel edit
     if (isEditing && editingId === id) cancelEdit();
+  };
+
+  // ⭐ Book event (only if logged in)
+  const handleBook = (event) => {
+    if (!isLoggedIn) {
+      alert("Please login to book events.");
+      navigate("/login");
+      return;
+    }
+
+    const saved = localStorage.getItem("bookings");
+    const bookings = saved ? JSON.parse(saved) : [];
+
+    const already = bookings.find((b) => b.id === event.id);
+    if (already) {
+      alert("You have already booked this event.");
+      return;
+    }
+
+    bookings.push(event);
+    localStorage.setItem("bookings", JSON.stringify(bookings));
+    alert(`You have booked: ${event.title}`);
   };
 
   return (
     <div>
-      {/* Hero */}
       <section className="bg-gradient-to-br from-pink-50 to-white border-b">
         <div className="page py-14">
           <div className="grid md:grid-cols-2 items-center gap-10">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                Plan, Publish & Manage <span className="text-primary">Events</span> with Ease
+                Plan, Publish & Manage{" "}
+                <span className="text-primary">Events</span> with Ease
               </h1>
               <p className="mt-4 text-gray-600">
-                Create events, track registrations, and share updates — all in one simple interface.
+                Create events, track registrations, and share updates — all in
+                one simple interface.
               </p>
               <div className="mt-6 flex gap-3">
-                <Link to="/register" className="btn btn-primary">Get Started</Link>
-                <Link to="/about" className="btn bg-white border">Learn More</Link>
+                <Link to="/register" className="btn btn-primary">
+                  Get Started
+                </Link>
+                <Link to="/about" className="btn bg-white border">
+                  Learn More
+                </Link>
               </div>
             </div>
 
             <div className="card">
-              <h3 className="text-lg font-semibold mb-3">{isEditing ? "Edit Event" : "Quick Add Event"}</h3>
+              <h3 className="text-lg font-semibold mb-3">
+                {isEditing ? "Edit Event" : "Quick Add Event"}
+              </h3>
               <form className="grid gap-3" onSubmit={handleSubmit}>
-                <input className="border rounded-xl px-4 py-2.5" placeholder="Event Title"
-                  value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} />
+                <input
+                  className="border rounded-xl px-4 py-2.5"
+                  placeholder="Event Title"
+                  value={newEvent.title}
+                  onChange={(e) =>
+                    setNewEvent({ ...newEvent, title: e.target.value })
+                  }
+                />
 
-                <input type="date" className="border rounded-xl px-4 py-2.5"
-                  value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} />
+                <input
+                  type="date"
+                  className="border rounded-xl px-4 py-2.5"
+                  value={newEvent.date}
+                  onChange={(e) =>
+                    setNewEvent({ ...newEvent, date: e.target.value })
+                  }
+                />
 
-                <input className="border rounded-xl px-4 py-2.5" placeholder="Location"
-                  value={newEvent.location} onChange={e => setNewEvent({ ...newEvent, location: e.target.value })} />
+                <input
+                  className="border rounded-xl px-4 py-2.5"
+                  placeholder="Location"
+                  value={newEvent.location}
+                  onChange={(e) =>
+                    setNewEvent({ ...newEvent, location: e.target.value })
+                  }
+                />
 
-                <textarea className="border rounded-xl px-4 py-2.5" rows="3" placeholder="Description"
-                  value={newEvent.desc} onChange={e => setNewEvent({ ...newEvent, desc: e.target.value })}></textarea>
+                <textarea
+                  className="border rounded-xl px-4 py-2.5"
+                  rows="3"
+                  placeholder="Description"
+                  value={newEvent.desc}
+                  onChange={(e) =>
+                    setNewEvent({ ...newEvent, desc: e.target.value })
+                  }
+                ></textarea>
 
                 <div className="flex gap-3">
-                  <button className="btn btn-primary" type="submit">{isEditing ? "Save Changes" : "Add Event"}</button>
-                  {isEditing && <button type="button" className="btn bg-white border" onClick={cancelEdit}>Cancel</button>}
+                  <button className="btn btn-primary" type="submit">
+                    {isEditing ? "Save Changes" : "Add Event"}
+                  </button>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      className="btn bg-white border"
+                      onClick={cancelEdit}
+                    >
+                      Cancel
+                    </button>
+                  )}
                 </div>
               </form>
             </div>
@@ -125,15 +216,32 @@ export default function Home() {
             <div key={e.id} className="card">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">{e.title}</h3>
-                <span className="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded-full">{e.date}</span>
+                <span className="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded-full">
+                  {e.date}
+                </span>
               </div>
               <p className="text-sm text-gray-600 mt-1">{e.location}</p>
               <p className="text-sm mt-3">{e.desc}</p>
 
               <div className="mt-4 flex gap-2">
-                <button className="btn bg-white border" onClick={() => startEdit(e.id)}>Edit</button>
-                <button className="btn btn-danger bg-white border" onClick={() => handleDelete(e.id)}>Delete</button>
-                <button className="ml-auto mt-0 btn bg-white border">View Details</button>
+                <button
+                  className="btn bg-white border"
+                  onClick={() => startEdit(e.id)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn btn-danger bg-white border"
+                  onClick={() => handleDelete(e.id)}
+                >
+                  Delete
+                </button>
+                <button
+                  className="btn bg-primary text-white"
+                  onClick={() => handleBook(e)}
+                >
+                  Book Event
+                </button>
               </div>
             </div>
           ))}
