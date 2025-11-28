@@ -14,13 +14,11 @@ export default function Home() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  // auth
   const [isLoggedIn, setIsLoggedIn] = useState(
     localStorage.getItem("auth") === "true"
   );
   const navigate = useNavigate();
-
-  // listen for login/logout change (from Login: window.dispatchEvent(new Event("authChanged")))
+  
   useEffect(() => {
     const handler = () => {
       setIsLoggedIn(localStorage.getItem("auth") === "true");
@@ -100,27 +98,37 @@ export default function Home() {
     if (isEditing && editingId === id) cancelEdit();
   };
 
-  // ⭐ Book event (only if logged in)
+  // Book event (only if logged in)
   const handleBook = (event) => {
-    if (!isLoggedIn) {
-      alert("Please login to book events.");
-      navigate("/login");
-      return;
-    }
+  if (!isLoggedIn) {
+    alert("Please login to book events.");
+    navigate("/login");
+    return;
+  }
 
-    const saved = localStorage.getItem("bookings");
-    const bookings = saved ? JSON.parse(saved) : [];
+  const email = localStorage.getItem("userEmail");
+  if (!email) {
+    alert("Something went wrong. Please login again.");
+    navigate("/login");
+    return;
+  }
 
-    const already = bookings.find((b) => b.id === event.id);
-    if (already) {
-      alert("You have already booked this event.");
-      return;
-    }
+  // ⭐ user-specific key
+  const key = `bookings_${email}`;
+  const saved = localStorage.getItem(key);
+  const bookings = saved ? JSON.parse(saved) : [];
 
-    bookings.push(event);
-    localStorage.setItem("bookings", JSON.stringify(bookings));
-    alert(`You have booked: ${event.title}`);
-  };
+  const already = bookings.find((b) => b.id === event.id);
+  if (already) {
+    alert("You have already booked this event.");
+    return;
+  }
+
+  bookings.push(event);
+  localStorage.setItem(key, JSON.stringify(bookings));
+
+  alert(`You have booked: ${event.title}`);
+};
 
   return (
     <div>

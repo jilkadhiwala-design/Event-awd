@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
@@ -11,6 +11,7 @@ export default function Register() {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const navigate = useNavigate();
 
   const change = (e) => {
     const updated = { ...form, [e.target.name]: e.target.value };
@@ -59,10 +60,34 @@ export default function Register() {
     setTouched({ name: true, email: true, password: true, confirm: true });
 
     if (Object.keys(newErrors).length) return;
-    
-    localStorage.setItem("auth", "true");
-    localStorage.setItem("userName", form.name);
-    alert(`Registered ${form.name}`);
+
+    // ✅ READ existing users from localStorage
+    const stored = localStorage.getItem("users");
+    const users = stored ? JSON.parse(stored) : [];
+
+    // check duplicate email
+    if (users.some((u) => u.email === form.email)) {
+      alert("This email is already registered. Please login instead.");
+      return;
+    }
+
+    // ✅ ADD new user
+    const newUser = {
+      name: form.name,
+      email: form.email,
+      password: form.password
+    };
+    users.push(newUser);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert(`Registered successfully: ${form.name}`);
+
+    // optional: clear form
+    setForm({ name: "", email: "", password: "", confirm: "" });
+    setTouched({});
+
+    // go to Login page
+    navigate("/login");
   };
 
   const inputClass = (field) => {
@@ -80,7 +105,6 @@ export default function Register() {
         <h2 className="text-2xl font-semibold mb-4">Create Account</h2>
 
         <form className="grid gap-3" onSubmit={submit} noValidate>
-
           {/* Name */}
           <div>
             <input
@@ -148,6 +172,7 @@ export default function Register() {
             Register
           </button>
         </form>
+
         <p className="text-sm text-gray-600 mt-3 text-center">
           Sign in?{" "}
           <Link className="text-primary underline" to="/login">

@@ -1,21 +1,33 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
+  const navigate = useNavigate();
 
-  // Load bookings from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("bookings");
+    const isAuth = localStorage.getItem("auth") === "true";
+    const email = localStorage.getItem("userEmail");
+
+    if (!isAuth || !email) {
+      alert("Please login to view your bookings.");
+      navigate("/login");
+      return;
+    }
+
+    const key = `bookings_${email}`;          // ⭐ SAME KEY
+    const saved = localStorage.getItem(key);
     setBookings(saved ? JSON.parse(saved) : []);
-  }, []);
+  }, [navigate]);
 
-  // Cancel booking (remove from localStorage)
   const handleCancel = (id) => {
-    if (!window.confirm("Cancel this booking?")) return;
+    const email = localStorage.getItem("userEmail");
+    if (!email) return;
 
+    const key = `bookings_${email}`;
     const updated = bookings.filter((b) => b.id !== id);
     setBookings(updated);
-    localStorage.setItem("bookings", JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   };
 
   return (
@@ -25,7 +37,7 @@ export default function MyBookings() {
       {bookings.length === 0 ? (
         <p className="text-gray-600">
           You haven’t booked any events yet. Go to the Home page and click
-          <span className="font-semibold"> “Book Event”</span> on an event card.
+          <span className="font-semibold"> “Book Event”</span>.
         </p>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -46,8 +58,7 @@ export default function MyBookings() {
                 </span>
                 <button
                   className="btn bg-white border text-xs"
-                  onClick={() => handleCancel(e.id)}
-                >
+                  onClick={() => handleCancel(e.id)}>
                   Cancel Booking
                 </button>
               </div>

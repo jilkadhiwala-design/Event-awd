@@ -8,7 +8,8 @@ export default function Login() {
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
-  const navigate = useNavigate();  
+  const [loginError, setLoginError] = useState("");
+  const navigate = useNavigate();
 
   const validateValues = ({ email, password }) => {
     const newErrors = {};
@@ -36,55 +37,82 @@ export default function Login() {
 
   const inputClass = (field) => {
     const base = "border rounded-xl px-4 py-2.5 w-full focus:outline-none";
-    if (errors[field] && touched[field]) return `${base} border-red-500 ring-1 ring-red-200`;
-    if (!errors[field] && touched[field]) return `${base} border-green-500 ring-1 ring-green-200`;
+    if (errors[field] && touched[field])
+      return `${base} border-red-500 ring-1 ring-red-200`;
+    if (!errors[field] && touched[field])
+      return `${base} border-green-500 ring-1 ring-green-200`;
     return `${base} border-gray-300`;
   };
 
   const submit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const newErrors = validateValues({ email, password });
-  setErrors(newErrors);
-  setTouched({ email: true, password: true });
+    const newErrors = validateValues({ email, password });
+    setErrors(newErrors);
+    setTouched({ email: true, password: true });
 
-  if (Object.keys(newErrors).length) return;
+    if (Object.keys(newErrors).length) return;
 
-  try {
-    setSubmitting(true);
-    setSuccessMsg("");
+    // ✅ check registered users from localStorage
+    const stored = localStorage.getItem("users");
+    const users = stored ? JSON.parse(stored) : [];
+    const user = users.find(
+      (u) => u.email === email && u.password === password
+    );
 
-    await new Promise((r) => setTimeout(r, 600));
+    if (!user) {
+      // not registered or wrong password
+      setSuccessMsg("");
+      setLoginError("Invalid email or password, or user is not registered.");
+      return;
+    }
 
-    // ✔ SAVE LOGIN INFO HERE
-    localStorage.setItem("auth", "true");
-    localStorage.setItem("userName", email.split("@")[0]);
+    try {
+      setSubmitting(true);
+      setSuccessMsg("");
+      setLoginError("");
 
-    setSuccessMsg(`Logged in as ${email}`);
-    setEmail("");
-    setPassword("");
-    setTouched({});
+      // fake delay (optional)
+      await new Promise((r) => setTimeout(r, 600));
 
-    // go to home
-    window.dispatchEvent(new Event("authChanged"));
-    navigate("/");
-    
+      // ✔ SAVE LOGIN INFO HERE
+      localStorage.setItem("auth", "true");
+      localStorage.setItem("userName", user.name);
+      localStorage.setItem("userEmail", user.email);
+
+      setSuccessMsg(`Logged in as ${user.name}`);
+      setEmail("");
+      setPassword("");
+      setTouched({});
+
+      // notify other components navbar / home
+      window.dispatchEvent(new Event("authChanged"));
+
+      // go to home
+      navigate("/");
     } catch (err) {
-      setSuccessMsg("Login failed. Please try again.");
+      setLoginError("Login failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6 py-10">
       <div className="max-w-md w-full card p-6 shadow-lg rounded-2xl bg-white">
-        <h2 className="text-3xl font-bold mb-6 text-center text-primary">Login</h2>
+        <h2 className="text-3xl font-bold mb-6 text-center text-primary">
+          Login
+        </h2>
 
         {successMsg && (
           <div className="mb-3 p-3 rounded bg-green-100 text-green-800">
             {successMsg}
+          </div>
+        )}
+
+        {loginError && (
+          <div className="mb-3 p-3 rounded bg-red-100 text-red-800">
+            {loginError}
           </div>
         )}
 
@@ -121,10 +149,11 @@ export default function Login() {
             )}
           </div>
 
-          {/* Submit Always Enabled */}
+          {/* Submit */}
           <button
             className="btn btn-primary w-full py-2 rounded-xl font-semibold flex items-center justify-center"
-            type="submit">
+            type="submit"
+          >
             {submitting ? (
               <>
                 <span className="spinner-border animate-spin w-4 h-4 mr-2"></span>
